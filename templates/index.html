@@ -217,6 +217,23 @@
             border-left-color: #ddd;
             font-style: italic;
         }
+
+        .font-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            font-family: inherit;
+        }
+
+        .font-name {
+            font-weight: 600;
+            color: #222;
+        }
+
+        .font-sample {
+            font-size: 1.05em;
+            color: #444;
+        }
         
         .colors-grid {
             display: grid;
@@ -550,7 +567,44 @@
                 img.style.display = 'none';
             }
         }
+
+        function formatFontFamily(font) {
+            if (!font) {
+                return 'inherit';
+            }
+
+            const trimmed = font.trim();
+            if (!trimmed) {
+                return 'inherit';
+            }
+
+            if (trimmed.includes(',')) {
+                return trimmed;
+            }
+
+            const needsQuotes = /\s/.test(trimmed) && !(trimmed.startsWith('"') || trimmed.startsWith("'"));
+            const family = needsQuotes ? `'${trimmed}'` : trimmed;
+            return `${family}, sans-serif`;
+        }
         
+        function applyFontStyles(styles = []) {
+            if (!styles || styles.length === 0) {
+                if (injectedFontStyle) {
+                    injectedFontStyle.remove();
+                    injectedFontStyle = null;
+                }
+                return;
+            }
+
+            if (!injectedFontStyle) {
+                injectedFontStyle = document.createElement('style');
+                injectedFontStyle.id = 'font-preview-styles';
+                document.head.appendChild(injectedFontStyle);
+            }
+
+            injectedFontStyle.textContent = styles.join('\n\n');
+        }
+
         function displayResults(data) {
             document.getElementById('results').style.display = 'block';
             
@@ -577,13 +631,51 @@
             setColorBox('splashColorBox', data.splash_screen?.color);
             
             // Fonts - display as a list
-            const fonts = data.fonts || [];
+            const fontData = Array.isArray(data.fonts)
+                ? { names: data.fonts, styles: [], urls: {} }
+                : (data.fonts || { names: [], styles: [], urls: {} });
+            const fonts = fontData.names || [];
+            const fontStyles = fontData.styles || [];
+            const fontUrls = fontData.urls || {};
+            applyFontStyles(fontStyles);
             const fontsList = document.getElementById('fontsList');
             fontsList.innerHTML = '';
             if (fonts.length > 0) {
+                const sampleText = 'Sphinx of black quartz jumps quickly';
                 fonts.forEach(font => {
                     const li = document.createElement('li');
-                    li.textContent = font;
+                    li.classList.add('font-item');
+
+                    const nameSpan = document.createElement('span');
+                    nameSpan.className = 'font-name';
+                    nameSpan.textContent = font;
+
+                    const sampleSpan = document.createElement('span');
+                    sampleSpan.className = 'font-sample';
+                    sampleSpan.textContent = sampleText;
+                    sampleSpan.style.fontFamily = formatFontFamily(font);
+
+                    const link = document.createElement('a');
+                    link.textContent = 'Download';
+                    link.style.fontSize = '0.85em';
+                    link.style.color = '#667eea';
+                    link.style.textDecoration = 'none';
+                    link.style.marginTop = '2px';
+                    link.target = '_blank';
+                    const url = fontUrls[font];
+                    if (url) {
+                        link.href = url;
+                    } else {
+                        link.href = '#';
+                        link.style.pointerEvents = 'none';
+                        link.style.opacity = '0.5';
+                    }
+                    link.addEventListener('mouseover', () => link.style.textDecoration = url ? 'underline' : 'none');
+                    link.addEventListener('mouseout', () => link.style.textDecoration = 'none');
+
+                    li.appendChild(nameSpan);
+                    li.appendChild(sampleSpan);
+                    li.appendChild(link);
                     fontsList.appendChild(li);
                 });
             } else {
@@ -631,6 +723,7 @@
         
         let allLinks = [];
         let currentFilter = 'all';
+        let injectedFontStyle = null;
         
         function displayLinks(links) {
             allLinks = links;
