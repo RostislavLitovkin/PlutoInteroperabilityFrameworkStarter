@@ -15,7 +15,6 @@ def analyze():
         if not url:
             return jsonify({'error': 'URL není zadána'}), 400
         
-        # Přidání https:// pokud chybí
         if not url.startswith(('http://', 'https://')):
             url = 'https://' + url
         

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="cs">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -367,7 +367,7 @@
     <div class="container">
         <div class="header">
             <h1>🔍 Web Analyzer</h1>
-            <p>Analyzujte webové stránky a získejte jejich klíčové informace</p>
+            <p>Analyze websites and get their key information</p>
         </div>
         
         <div class="input-section">
@@ -375,27 +375,27 @@
                 <input 
                     type="text" 
                     id="urlInput" 
-                    placeholder="Zadejte URL webové stránky (např. https://example.com)"
+                    placeholder="Enter a website URL (e.g. https://example.com)"
                     autocomplete="off"
                 >
-                <button id="analyzeBtn" onclick="analyzeUrl()">Analyzovat</button>
+                <button id="analyzeBtn" onclick="analyzeUrl()">Analyze</button>
             </div>
             <div class="loading" id="loading">
                 <div class="spinner"></div>
-                <p>Analyzuji webovou stránku...</p>
+                <p>Analyzing the website...</p>
             </div>
             <div class="error" id="error"></div>
         </div>
         
         <div class="results" id="results">
             <div class="result-section">
-                <h2>📄 Základní informace</h2>
+                <h2>📄 Basic Information</h2>
                 <div class="result-item">
-                    <span class="result-label">Název:</span>
+                    <span class="result-label">Title:</span>
                     <span class="result-value" id="title">-</span>
                 </div>
                 <div class="result-item">
-                    <span class="result-label">Popis:</span>
+                    <span class="result-label">Description:</span>
                     <span class="result-value" id="description">-</span>
                 </div>
                 <div class="result-item">
@@ -405,7 +405,7 @@
             </div>
             
             <div class="result-section">
-                <h2>🎨 Ikony</h2>
+                <h2>🎨 Icons</h2>
                 <div class="icon-item">
                     <div class="icon-header">
                         <span class="result-label">Front Icon</span>
@@ -448,14 +448,14 @@
             </div>
             
             <div class="result-section">
-                <h2>🔤 Fonty</h2>
+                <h2>🔤 Fonts</h2>
                 <ul class="font-list" id="fontsList">
-                    <li class="no-data">Žádné fonty nenalezeny</li>
+                    <li class="no-data">No fonts found</li>
                 </ul>
             </div>
             
             <div class="result-section">
-                <h2>🎨 Barvy</h2>
+                <h2>🎨 Colors</h2>
                 <div class="colors-grid">
                     <div class="color-item">
                         <div class="color-header">
@@ -482,7 +482,7 @@
             </div>
             
             <div class="result-section">
-                <h2>⚙️ UI Specifikace</h2>
+                <h2>⚙️ UI Specifications</h2>
                 <div class="result-item">
                     <span class="result-label">Shadow:</span>
                     <span class="result-value" id="shadow">-</span>
@@ -502,17 +502,17 @@
             </div>
             
             <div class="result-section">
-                <h2>🔗 Odkazy na stránce</h2>
+                <h2>🔗 Links on the Page</h2>
                 <div class="links-header">
-                    <span class="result-label">Celkem odkazů: <span id="linksCount">0</span></span>
+                    <span class="result-label">Total links: <span id="linksCount">0</span></span>
                     <div class="links-filter">
-                        <button class="filter-btn active" onclick="filterLinks('all')">Vše</button>
-                        <button class="filter-btn" onclick="filterLinks('internal')">Interní</button>
-                        <button class="filter-btn" onclick="filterLinks('external')">Externí</button>
+                        <button class="filter-btn active" onclick="filterLinks('all')">All</button>
+                        <button class="filter-btn" onclick="filterLinks('internal')">Internal</button>
+                        <button class="filter-btn" onclick="filterLinks('external')">External</button>
                     </div>
                 </div>
                 <div class="links-container" id="linksContainer">
-                    <div class="no-data">Načítání odkazů...</div>
+                    <div class="no-data">Loading links...</div>
                 </div>
             </div>
         </div>
@@ -554,12 +554,12 @@
         function displayResults(data) {
             document.getElementById('results').style.display = 'block';
             
-            // Základní informace
+            // Basic info
             document.getElementById('title').textContent = data.title || '-';
             document.getElementById('description').textContent = data.description || '-';
             document.getElementById('url').textContent = data.url || '-';
             
-            // Ikony
+            // Icons
             document.getElementById('frontIcon').textContent = data.icons?.front_icon || '-';
             setIconImg('frontIconImg', data.icons?.front_icon);
             
@@ -576,7 +576,7 @@
             document.getElementById('splashColor').textContent = data.splash_screen?.color || '-';
             setColorBox('splashColorBox', data.splash_screen?.color);
             
-            // Fonty - zobrazíme jako seznam
+            // Fonts - display as a list
             const fonts = data.fonts || [];
             const fontsList = document.getElementById('fontsList');
             fontsList.innerHTML = '';
@@ -589,11 +589,11 @@
             } else {
                 const li = document.createElement('li');
                 li.className = 'no-data';
-                li.textContent = 'Žádné fonty nenalezeny';
+                li.textContent = 'No fonts found';
                 fontsList.appendChild(li);
             }
             
-            // Barvy
+            // Colors
             const primaryColor = data.colors?.primary || '-';
             document.getElementById('primaryColor').textContent = primaryColor;
             setColorBox('primaryColorBox', primaryColor);
@@ -625,7 +625,7 @@
             document.getElementById('cornerRadius').textContent = data.ui_specs?.corner_radius || '-';
             document.getElementById('itemSpacing').textContent = data.ui_specs?.item_spacing || '-';
             
-            // Odkazy
+            // Links
             displayLinks(data.links || []);
         }
         
@@ -640,7 +640,7 @@
             countElement.textContent = links.length;
             
             if (links.length === 0) {
-                container.innerHTML = '<div class="no-data">Žádné odkazy nenalezeny</div>';
+                container.innerHTML = '<div class="no-data">No links found</div>';
                 return;
             }
             
@@ -656,11 +656,11 @@
                 
                 const text = document.createElement('div');
                 text.className = 'link-text';
-                text.textContent = link.text || '(bez textu)';
+                text.textContent = link.text || '(no text)';
                 
                 const badge = document.createElement('span');
                 badge.className = `link-badge ${link.is_internal ? 'internal' : 'external'}`;
-                badge.textContent = link.is_internal ? 'Interní' : 'Externí';
+                badge.textContent = link.is_internal ? 'Internal' : 'External';
                 
                 header.appendChild(text);
                 header.appendChild(badge);
@@ -688,26 +688,26 @@
                 container.appendChild(linkItem);
             });
             
-            // Aplikujeme aktuální filtr
+            // Apply the current filter
             filterLinks(currentFilter);
         }
         
         function filterLinks(type) {
             currentFilter = type;
             
-            // Aktualizujeme tlačítka
+            // Update buttons
             document.querySelectorAll('.filter-btn').forEach(btn => {
                 btn.classList.remove('active');
-                if (btn.textContent.trim() === 'Vše' && type === 'all') {
+                if (btn.textContent.trim() === 'All' && type === 'all') {
                     btn.classList.add('active');
-                } else if (btn.textContent.trim() === 'Interní' && type === 'internal') {
+                } else if (btn.textContent.trim() === 'Internal' && type === 'internal') {
                     btn.classList.add('active');
-                } else if (btn.textContent.trim() === 'Externí' && type === 'external') {
+                } else if (btn.textContent.trim() === 'External' && type === 'external') {
                     btn.classList.add('active');
                 }
             });
             
-            // Filtrujeme odkazy
+            // Filter links
             const linkItems = document.querySelectorAll('.link-item');
             let visibleCount = 0;
             linkItems.forEach(item => {
@@ -731,7 +731,7 @@
                 }
             });
             
-            // Aktualizujeme počet
+            // Update count
             document.getElementById('linksCount').textContent = visibleCount;
         }
         
@@ -743,7 +743,7 @@
             
             const url = urlInput.value.trim();
             if (!url) {
-                showError('Prosím zadejte URL');
+                showError('Please enter a URL');
                 return;
             }
             
@@ -763,12 +763,12 @@
                 const data = await response.json();
                 
                 if (!response.ok) {
-                    throw new Error(data.error || 'Chyba při analýze');
+                    throw new Error(data.error || 'Error during analysis');
                 }
                 
                 displayResults(data);
             } catch (error) {
-                showError('Chyba: ' + error.message);
+                showError('Error: ' + error.message);
             } finally {
                 analyzeBtn.disabled = false;
                 loading.style.display = 'none';
@@ -784,4 +784,3 @@
     </script>
 </body>
 </html>
-
