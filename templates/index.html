@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Analyzer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .input-section {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+        
+        #urlInput {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        #urlInput:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        #analyzeBtn {
+            padding: 15px 30px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        #analyzeBtn:hover {
+            background: #5568d3;
+        }
+        
+        #analyzeBtn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .results {
+            display: none;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .result-section {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .result-section:last-child {
+            border-bottom: none;
+        }
+        
+        .result-section h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+        
+        .result-item {
+            margin-bottom: 10px;
+        }
+        
+        .result-label {
+            font-weight: bold;
+            color: #333;
+            margin-right: 10px;
+        }
+        
+        .result-value {
+            color: #666;
+        }
+        
+        .icon-item {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            margin-bottom: 10px;
+        }
+        
+        .icon-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        
+        .icon-url {
+            display: block;
+            font-family: monospace;
+            font-size: 0.85em;
+            color: #666;
+            word-break: break-all;
+        }
+        
+        .icon-preview {
+            max-width: 48px;
+            max-height: 48px;
+            border-radius: 6px;
+            border: 2px solid #ddd;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .color-box {
+            width: 40px;
+            height: 40px;
+            border-radius: 6px;
+            border: 2px solid #ddd;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .error {
+            display: none;
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border-left: 4px solid #c62828;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .font-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .font-list li {
+            padding: 8px 12px;
+            margin: 5px 0;
+            background: #f5f5f5;
+            border-radius: 6px;
+            border-left: 3px solid #667eea;
+            font-family: monospace;
+        }
+        
+        .font-list li.no-data {
+            color: #999;
+            border-left-color: #ddd;
+            font-style: italic;
+        }
+        
+        .colors-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .color-item {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .color-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        
+        .color-value {
+            display: block;
+            font-family: monospace;
+            font-size: 0.9em;
+            color: #666;
+        }
+        
+        .color-box {
+            width: 40px;
+            height: 40px;
+            border-radius: 6px;
+            border: 2px solid #ddd;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .links-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .links-filter {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .filter-btn {
+            padding: 6px 12px;
+            border: 1px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s;
+        }
+        
+        .filter-btn:hover {
+            background: #f0f0ff;
+        }
+        
+        .filter-btn.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .links-container {
+            max-height: 600px;
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 10px;
+            background: #fafafa;
+        }
+        
+        .link-item {
+            background: white;
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            border-left: 3px solid #667eea;
+            transition: all 0.2s;
+        }
+        
+        .link-item:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transform: translateX(2px);
+        }
+        
+        .link-item.external {
+            border-left-color: #ff9800;
+        }
+        
+        .link-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        
+        .link-text {
+            font-weight: 500;
+            color: #333;
+            flex: 1;
+        }
+        
+        .link-badge {
+            font-size: 0.75em;
+            padding: 2px 8px;
+            border-radius: 12px;
+            background: #667eea;
+            color: white;
+            margin-left: 10px;
+        }
+        
+        .link-badge.external {
+            background: #ff9800;
+        }
+        
+        .link-url {
+            font-family: monospace;
+            font-size: 0.85em;
+            color: #666;
+            word-break: break-all;
+            margin-top: 5px;
+        }
+        
+        .link-url a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        
+        .link-url a:hover {
+            text-decoration: underline;
+        }
+        
+        .link-item.hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Web Analyzer</h1>
+            <p>Analyzujte webové stránky a získejte jejich klíčové informace</p>
+        </div>
+        
+        <div class="input-section">
+            <div class="input-group">
+                <input 
+                    type="text" 
+                    id="urlInput" 
+                    placeholder="Zadejte URL webové stránky (např. https://example.com)"
+                    autocomplete="off"
+                >
+                <button id="analyzeBtn" onclick="analyzeUrl()">Analyzovat</button>
+            </div>
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Analyzuji webovou stránku...</p>
+            </div>
+            <div class="error" id="error"></div>
+        </div>
+        
+        <div class="results" id="results">
+            <div class="result-section">
+                <h2>📄 Základní informace</h2>
+                <div class="result-item">
+                    <span class="result-label">Název:</span>
+                    <span class="result-value" id="title">-</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">Popis:</span>
+                    <span class="result-value" id="description">-</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">URL:</span>
+                    <span class="result-value" id="url">-</span>
+                </div>
+            </div>
+            
+            <div class="result-section">
+                <h2>🎨 Ikony</h2>
+                <div class="icon-item">
+                    <div class="icon-header">
+                        <span class="result-label">Front Icon</span>
+                        <img id="frontIconImg" class="icon-preview" style="display: none;" alt="Front Icon">
+                    </div>
+                    <span class="result-value icon-url" id="frontIcon">-</span>
+                </div>
+                <div class="icon-item">
+                    <div class="icon-header">
+                        <span class="result-label">Background Icon</span>
+                        <img id="backgroundIconImg" class="icon-preview" style="display: none;" alt="Background Icon">
+                    </div>
+                    <span class="result-value icon-url" id="backgroundIcon">-</span>
+                </div>
+                <div class="icon-item">
+                    <div class="icon-header">
+                        <span class="result-label">Background Color</span>
+                        <span id="backgroundColorBox" class="color-box" style="display: none;"></span>
+                    </div>
+                    <span class="result-value color-value" id="backgroundColor">-</span>
+                </div>
+            </div>
+            
+            <div class="result-section">
+                <h2>📱 Splash Screen</h2>
+                <div class="icon-item">
+                    <div class="icon-header">
+                        <span class="result-label">Icon</span>
+                        <img id="splashIconImg" class="icon-preview" style="display: none;" alt="Splash Icon">
+                    </div>
+                    <span class="result-value icon-url" id="splashIcon">-</span>
+                </div>
+                <div class="icon-item">
+                    <div class="icon-header">
+                        <span class="result-label">Color</span>
+                        <span id="splashColorBox" class="color-box" style="display: none;"></span>
+                    </div>
+                    <span class="result-value color-value" id="splashColor">-</span>
+                </div>
+            </div>
+            
+            <div class="result-section">
+                <h2>🔤 Fonty</h2>
+                <ul class="font-list" id="fontsList">
+                    <li class="no-data">Žádné fonty nenalezeny</li>
+                </ul>
+            </div>
+            
+            <div class="result-section">
+                <h2>🎨 Barvy</h2>
+                <div class="colors-grid">
+                    <div class="color-item">
+                        <div class="color-header">
+                            <span class="result-label">Primary</span>
+                            <span id="primaryColorBox" class="color-box" style="display: none;"></span>
+                        </div>
+                        <span class="result-value color-value" id="primaryColor">-</span>
+                    </div>
+                    <div class="color-item">
+                        <div class="color-header">
+                            <span class="result-label">Secondary</span>
+                            <span id="secondaryColorBox" class="color-box" style="display: none;"></span>
+                        </div>
+                        <span class="result-value color-value" id="secondaryColor">-</span>
+                    </div>
+                    <div class="color-item">
+                        <div class="color-header">
+                            <span class="result-label">Tertiary</span>
+                            <span id="tertiaryColorBox" class="color-box" style="display: none;"></span>
+                        </div>
+                        <span class="result-value color-value" id="tertiaryColor">-</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="result-section">
+                <h2>⚙️ UI Specifikace</h2>
+                <div class="result-item">
+                    <span class="result-label">Shadow:</span>
+                    <span class="result-value" id="shadow">-</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">Border:</span>
+                    <span class="result-value" id="border">-</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">Corner Radius:</span>
+                    <span class="result-value" id="cornerRadius">-</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">Item Spacing:</span>
+                    <span class="result-value" id="itemSpacing">-</span>
+                </div>
+            </div>
+            
+            <div class="result-section">
+                <h2>🔗 Odkazy na stránce</h2>
+                <div class="links-header">
+                    <span class="result-label">Celkem odkazů: <span id="linksCount">0</span></span>
+                    <div class="links-filter">
+                        <button class="filter-btn active" onclick="filterLinks('all')">Vše</button>
+                        <button class="filter-btn" onclick="filterLinks('internal')">Interní</button>
+                        <button class="filter-btn" onclick="filterLinks('external')">Externí</button>
+                    </div>
+                </div>
+                <div class="links-container" id="linksContainer">
+                    <div class="no-data">Načítání odkazů...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+        
+        function setColorBox(elementId, color) {
+            const box = document.getElementById(elementId);
+            if (color && color !== '-') {
+                box.style.backgroundColor = color;
+                box.style.display = 'inline-block';
+            } else {
+                box.style.display = 'none';
+            }
+        }
+        
+        function setIconImg(elementId, url) {
+            const img = document.getElementById(elementId);
+            if (url && url !== '-') {
+                img.src = url;
+                img.style.display = 'inline-block';
+                img.onerror = function() {
+                    this.style.display = 'none';
+                };
+            } else {
+                img.style.display = 'none';
+            }
+        }
+        
+        function displayResults(data) {
+            document.getElementById('results').style.display = 'block';
+            
+            // Základní informace
+            document.getElementById('title').textContent = data.title || '-';
+            document.getElementById('description').textContent = data.description || '-';
+            document.getElementById('url').textContent = data.url || '-';
+            
+            // Ikony
+            document.getElementById('frontIcon').textContent = data.icons?.front_icon || '-';
+            setIconImg('frontIconImg', data.icons?.front_icon);
+            
+            document.getElementById('backgroundIcon').textContent = data.icons?.background_icon || '-';
+            setIconImg('backgroundIconImg', data.icons?.background_icon);
+            
+            document.getElementById('backgroundColor').textContent = data.icons?.background_color || '-';
+            setColorBox('backgroundColorBox', data.icons?.background_color);
+            
+            // Splash screen
+            document.getElementById('splashIcon').textContent = data.splash_screen?.icon || '-';
+            setIconImg('splashIconImg', data.splash_screen?.icon);
+            
+            document.getElementById('splashColor').textContent = data.splash_screen?.color || '-';
+            setColorBox('splashColorBox', data.splash_screen?.color);
+            
+            // Fonty - zobrazíme jako seznam
+            const fonts = data.fonts || [];
+            const fontsList = document.getElementById('fontsList');
+            fontsList.innerHTML = '';
+            if (fonts.length > 0) {
+                fonts.forEach(font => {
+                    const li = document.createElement('li');
+                    li.textContent = font;
+                    fontsList.appendChild(li);
+                });
+            } else {
+                const li = document.createElement('li');
+                li.className = 'no-data';
+                li.textContent = 'Žádné fonty nenalezeny';
+                fontsList.appendChild(li);
+            }
+            
+            // Barvy
+            const primaryColor = data.colors?.primary || '-';
+            document.getElementById('primaryColor').textContent = primaryColor;
+            setColorBox('primaryColorBox', primaryColor);
+            
+            const secondaryColor = data.colors?.secondary || '-';
+            document.getElementById('secondaryColor').textContent = secondaryColor;
+            setColorBox('secondaryColorBox', secondaryColor);
+            
+            const tertiaryColor = data.colors?.tertiary || '-';
+            document.getElementById('tertiaryColor').textContent = tertiaryColor;
+            setColorBox('tertiaryColorBox', tertiaryColor);
+            
+            // UI Specs
+            const shadow = data.ui_specs?.shadow || {};
+            const shadowText = [
+                shadow.color ? `Color: ${shadow.color}` : '',
+                shadow.opacity ? `Opacity: ${shadow.opacity}` : '',
+                shadow.angle ? `Angle: ${shadow.angle}` : ''
+            ].filter(Boolean).join(', ') || '-';
+            document.getElementById('shadow').textContent = shadowText;
+            
+            const border = data.ui_specs?.border || {};
+            const borderText = [
+                border.color ? `Color: ${border.color}` : '',
+                border.thickness ? `Thickness: ${border.thickness}` : ''
+            ].filter(Boolean).join(', ') || '-';
+            document.getElementById('border').textContent = borderText;
+            
+            document.getElementById('cornerRadius').textContent = data.ui_specs?.corner_radius || '-';
+            document.getElementById('itemSpacing').textContent = data.ui_specs?.item_spacing || '-';
+            
+            // Odkazy
+            displayLinks(data.links || []);
+        }
+        
+        let allLinks = [];
+        let currentFilter = 'all';
+        
+        function displayLinks(links) {
+            allLinks = links;
+            const container = document.getElementById('linksContainer');
+            const countElement = document.getElementById('linksCount');
+            
+            countElement.textContent = links.length;
+            
+            if (links.length === 0) {
+                container.innerHTML = '<div class="no-data">Žádné odkazy nenalezeny</div>';
+                return;
+            }
+            
+            container.innerHTML = '';
+            
+            links.forEach(link => {
+                const linkItem = document.createElement('div');
+                linkItem.className = `link-item ${link.is_internal ? 'internal' : 'external'}`;
+                linkItem.dataset.type = link.is_internal ? 'internal' : 'external';
+                
+                const header = document.createElement('div');
+                header.className = 'link-header';
+                
+                const text = document.createElement('div');
+                text.className = 'link-text';
+                text.textContent = link.text || '(bez textu)';
+                
+                const badge = document.createElement('span');
+                badge.className = `link-badge ${link.is_internal ? 'internal' : 'external'}`;
+                badge.textContent = link.is_internal ? 'Interní' : 'Externí';
+                
+                header.appendChild(text);
+                header.appendChild(badge);
+                
+                const urlDiv = document.createElement('div');
+                urlDiv.className = 'link-url';
+                const urlLink = document.createElement('a');
+                urlLink.href = link.url;
+                urlLink.target = link.target || '_blank';
+                urlLink.rel = link.rel || 'noopener noreferrer';
+                urlLink.textContent = link.url;
+                urlDiv.appendChild(urlLink);
+                
+                if (link.title) {
+                    const titleDiv = document.createElement('div');
+                    titleDiv.style.fontSize = '0.8em';
+                    titleDiv.style.color = '#999';
+                    titleDiv.style.marginTop = '3px';
+                    titleDiv.textContent = `Title: ${link.title}`;
+                    urlDiv.appendChild(titleDiv);
+                }
+                
+                linkItem.appendChild(header);
+                linkItem.appendChild(urlDiv);
+                container.appendChild(linkItem);
+            });
+            
+            // Aplikujeme aktuální filtr
+            filterLinks(currentFilter);
+        }
+        
+        function filterLinks(type) {
+            currentFilter = type;
+            
+            // Aktualizujeme tlačítka
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.textContent.trim() === 'Vše' && type === 'all') {
+                    btn.classList.add('active');
+                } else if (btn.textContent.trim() === 'Interní' && type === 'internal') {
+                    btn.classList.add('active');
+                } else if (btn.textContent.trim() === 'Externí' && type === 'external') {
+                    btn.classList.add('active');
+                }
+            });
+            
+            // Filtrujeme odkazy
+            const linkItems = document.querySelectorAll('.link-item');
+            let visibleCount = 0;
+            linkItems.forEach(item => {
+                if (type === 'all') {
+                    item.classList.remove('hidden');
+                    visibleCount++;
+                } else if (type === 'internal') {
+                    if (item.dataset.type === 'internal') {
+                        item.classList.remove('hidden');
+                        visibleCount++;
+                    } else {
+                        item.classList.add('hidden');
+                    }
+                } else if (type === 'external') {
+                    if (item.dataset.type === 'external') {
+                        item.classList.remove('hidden');
+                        visibleCount++;
+                    } else {
+                        item.classList.add('hidden');
+                    }
+                }
+            });
+            
+            // Aktualizujeme počet
+            document.getElementById('linksCount').textContent = visibleCount;
+        }
+        
+        async function analyzeUrl() {
+            const urlInput = document.getElementById('urlInput');
+            const analyzeBtn = document.getElementById('analyzeBtn');
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+            
+            const url = urlInput.value.trim();
+            if (!url) {
+                showError('Prosím zadejte URL');
+                return;
+            }
+            
+            analyzeBtn.disabled = true;
+            loading.style.display = 'block';
+            results.style.display = 'none';
+            
+            try {
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url: url })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Chyba při analýze');
+                }
+                
+                displayResults(data);
+            } catch (error) {
+                showError('Chyba: ' + error.message);
+            } finally {
+                analyzeBtn.disabled = false;
+                loading.style.display = 'none';
+            }
+        }
+        
+        // Enter key support
+        document.getElementById('urlInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                analyzeUrl();
+            }
+        });
+    </script>
+</body>
+</html>
+
